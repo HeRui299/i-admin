@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+    <!--自定义realm交给spring ioc 容器管理-->
+    <bean name="realm" class="com.imcode.sys.shiro.ShiroRealm"/>
+
+    <!--缓存管理器交给spring ioc 容器管理-->
+    <bean name="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager"/>
+
+    <!--将安全管理器交给spring ioc 容器管理-->
+    <bean name="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <!--注入自定义realm-->
+        <property name="realm" ref="realm"/>
+        <!--注入缓存管理器-->
+        <property name="cacheManager" ref="cacheManager"/>
+    </bean>
+
+    <!-- shiro 的Web过滤器 -->
+    <bean name="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <!--注入安全管理器-->
+        <property name="securityManager" ref="securityManager"/>
+
+        <!--如果没有认证将要跳转的登陆地址 -->
+        <property name="loginUrl" value="/login"/>
+        <!-- 配置安全规则 -->
+        <property name="filterChainDefinitions">
+            <value>
+                <!-- 登录页面不拦截 -->
+                /login anon
+                <!--静态资源可以直接访问-->
+                /static/** anon
+                /upload/** anon
+                <!-- user表示身份认证通过可以访问 -->
+                /** user
+            </value>
+        </property>
+
+    </bean>
+
+    <!--
+        使用SecurityUtils将securityManager设置到运行环境中
+        SecurityUtils.setSecurityManager(securityManager);
+    -->
+    <!-- 相当于调用SecurityUtils.setSecurityManager(securityManager) -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="staticMethod" value="org.apache.shiro.SecurityUtils.setSecurityManager"/>
+        <property name="arguments" ref="securityManager"/>
+    </bean>
+
+    <!-- Shiro生命周期处理器-->
+    <bean name="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+</beans>
